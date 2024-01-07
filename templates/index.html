@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static' , filename='style.css') }}" />
+    <title>Movie Recommender</title>
+    
+</head>
+<body>
+
+    <video id="background-video" autoplay loop muted>
+        <source src="https://cdn.discordapp.com/attachments/759851314028216350/856592738518433909/arnavraghavlund_Trim1.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+     
+    <div class="overlay"></div>
+
+    <div class="container">
+        <h1>Movie Recommender</h1>
+        <form action="/recommend" method="POST">
+            <label for="search_bar">Search for a movie:</label>
+            <input type="text" name="search_bar" id="search_bar" list="movie_list" placeholder="Start typing to search...">
+            <datalist id="movie_list">
+                {% for movie in movie_list %}
+                    <option value="{{ movie }}">
+                {% endfor %}
+            </datalist>
+            <button type="submit">Get Recommendations</button>
+        </form>
+
+        {% if selected_movie %}
+            <h2>Recommended Movies for "{{ selected_movie }}"</h2>
+            <div class="recommendations">
+                {% for i in range(recommended_movie_names|length) %}
+                    <div class="movie-card">
+                        <img src="{{ recommended_movie_posters[i] }}" alt="{{ recommended_movie_names[i] }}">
+                        <h3>{{ recommended_movie_names[i] }}</h3>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
