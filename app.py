@@ -1,11 +1,6 @@
-from flask import Flask, render_template, request
 import pickle
+import streamlit as st
 import requests
-
-app = Flask(__name__, template_folder='templates', static_folder='static')
-
-similarity = pickle.load(open('similarity.pkl', 'rb'))
-movies = pickle.load(open('movie_list.pkl', 'rb'))
 
 def fetch_poster(movie_id):
     url = "https://api.themoviedb.org/3/movie/{}?api_key=8265bd1679663a7ea12ac168da84d2e8&language=en-US".format(movie_id)
@@ -26,47 +21,40 @@ def recommend(movie):
         recommended_movie_posters.append(fetch_poster(movie_id))
         recommended_movie_names.append(movies.iloc[i[0]].title)
 
-    return recommended_movie_names, recommended_movie_posters
-
-@app.route('/', methods=['GET'])
-def home():
-     movies = pickle.load(open('movie_list.pkl', 'rb'))
-     movie_list = movies['title'].values
-     return render_template ('index.html', movie_list=movie_list)
+    return recommended_movie_names,recommended_movie_posters
 
 
-@app.route('/recommend', methods=['POST'])
-def index():
-    if request.method == 'POST':
-        movies = pickle.load(open('movie_list.pkl', 'rb'))
-        movie_list = movies['title'].values
+st.header('Movie Recommender System')
+movies = pickle.load(open('movie_list.pkl','rb'))
 
-        # Handle the search bar input
-        selected_movie = request.form.get('search_bar', None)
+from sklearn.feature_extraction.text import CountVectorizer
+cv = CountVectorizer(max_features=5000,stop_words='english')
+vector = cv.fit_transform(movies['tags']).toarray()
+from sklearn.metrics.pairwise import cosine_similarity
+similarity = cosine_similarity(vector)
 
-        # If the search bar is not filled, use the dropdown
-        if selected_movie is None:
-            selected_movie = request.form.get('selected_movie', None)
+movie_list = movies['title'].values
+selected_movie = st.selectbox(
+    "Type or select a movie from the dropdown",
+    movie_list
+)
 
-        if selected_movie:
-            recommended_movie_names, recommended_movie_posters = recommend(selected_movie)
-            return render_template('index.html', 
-                                    selected_movie=selected_movie,
-                                    recommended_movie_names=recommended_movie_names,
-                                    recommended_movie_posters=recommended_movie_posters,
-                                    movie_list=movie_list)
-        else:
-            # Handle the case where no movie is selected
-            return render_template('index.html', movie_list=movie_list)
+if st.button('Show Recommendation'):
+    recommended_movie_names,recommended_movie_posters = recommend(selected_movie)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.text(recommended_movie_names[0])
+        st.image(recommended_movie_posters[0])
+    with col2:
+        st.text(recommended_movie_names[1])
+        st.image(recommended_movie_posters[1])
 
-    else:
-        movies = pickle.load(open('movie_list.pkl', 'rb'))
-        movie_list = movies['title'].values
-        return render_template('index.html', movie_list=movie_list)
-
-if __name__ == '__main__':
-    # Load the similarity and movies data outside the route function
-    # similarity = pickle.load(open('similarity.pkl', 'rb'))
-    # movies = pickle.load(open('movie_list.pkl', 'rb'))
-    
-    app.run(debug=True)
+    with col3:
+        st.text(recommended_movie_names[2])
+        st.image(recommended_movie_posters[2])
+    with col4:
+        st.text(recommended_movie_names[3])
+        st.image(recommended_movie_posters[3])
+    with col5:
+        st.text(recommended_movie_names[4])
+        st.image(recommended_movie_posters[4])
